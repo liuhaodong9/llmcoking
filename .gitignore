@@ -29,6 +29,5 @@ pnpm-debug.log*
 *.sw?
 
 # Data files
-*.pdf
 src/LLM_back/deepcoke/data/chromadb/
 src/LLM_back/deepcoke/data/bge-base-en-v1.5/
