@@ -8,7 +8,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 CHROMADB_DIR = DATA_DIR / "chromadb"
-PAPERS_DIR = Path(r"D:\焦化机器人PC端\Coal blend paper")
+PAPERS_DIR = Path(os.getenv("PAPERS_DIR", str(BASE_DIR.parent.parent.parent / "Coal blend paper")))
 
 # ── LLM (Ollama local Qwen3) ─────────────────────────────────────
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "ollama")
@@ -27,7 +27,7 @@ NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "deepcoke2024")
 
 # ── ESCARGOT ──────────────────────────────────────────────────────
-ESCARGOT_DIR = Path(r"D:\escargot")
+ESCARGOT_DIR = Path(os.getenv("ESCARGOT_DIR", str(BASE_DIR.parent.parent.parent / "escargot")))
 ESCARGOT_TIMEOUT = 90  # seconds
 ESCARGOT_MAX_TOKENS = 8000
 
