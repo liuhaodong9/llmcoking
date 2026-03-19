@@ -28,7 +28,7 @@ def _get_embedding_function():
             model_name=config.EMBEDDING_MODEL,
             device=device,
         )
-        print(f"[ChromaDB] Embedding 模型加载完成 ✓")
+        print(f"[ChromaDB] Embedding 模型加载完成 OK")
     except Exception as e:
         print(f"[ChromaDB] SentenceTransformer init failed ({e}), using default embeddings")
         _embedding_fn = None

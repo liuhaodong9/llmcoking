@@ -8,16 +8,20 @@ import logging
 import threading
 from pathlib import Path
 
-sys.path.insert(0, str(Path(r"D:\escargot")))
-
-from escargot.controller.controller import Controller
-from escargot.operations import operations
-from escargot.parser.parser import ESCARGOTParser
-from escargot.coder.coder import Coder
-
-from .deepseek_lm import DeepSeekLM
-from .coking_prompter import CokingPrompter
 from .. import config
+
+_escargot_available = False
+try:
+    sys.path.insert(0, str(config.ESCARGOT_DIR))
+    from escargot.controller.controller import Controller
+    from escargot.operations import operations
+    from escargot.parser.parser import ESCARGOTParser
+    from escargot.coder.coder import Coder
+    from .deepseek_lm import DeepSeekLM
+    from .coking_prompter import CokingPrompter
+    _escargot_available = True
+except ImportError as e:
+    logging.getLogger("escargot.coking").warning(f"ESCARGOT not available: {e}")
 
 
 def run_escargot_reasoning(
@@ -38,6 +42,9 @@ def run_escargot_reasoning(
     Returns:
         The reasoning result as a string, or error message.
     """
+    if not _escargot_available:
+        return ""
+
     timeout = timeout or config.ESCARGOT_TIMEOUT
     logger = logging.getLogger("escargot.coking")
 

@@ -97,10 +97,12 @@ def extract_with_pdfplumber(pdf_path: str | Path) -> ParsedPaper | None:
 
 def parse_pdf(pdf_path: str | Path) -> ParsedPaper | None:
     """Parse a PDF file, trying fitz first, then pdfplumber."""
-    result = extract_with_fitz(pdf_path)
-    if result is None:
-        result = extract_with_pdfplumber(pdf_path)
-    return result
+    import os
+    if os.getenv("DEEPCOKE_SKIP_FITZ", "").lower() not in ("1", "true"):
+        result = extract_with_fitz(pdf_path)
+        if result is not None:
+            return result
+    return extract_with_pdfplumber(pdf_path)
 
 
 def _detect_sections(pages_text: list[str]) -> list[PaperSection]:

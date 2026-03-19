@@ -129,12 +129,12 @@ def run():
         try:
             parsed = parse_pdf(pdf_path)
         except Exception as e:
-            print(f"[{i}/{total}] ✗ 解析失败: {pdf_path.name} ({e})")
+            print(f"[{i}/{total}] X 解析失败: {pdf_path.name} ({e})")
             failed += 1
             continue
 
         if parsed is None:
-            print(f"[{i}/{total}] ✗ 无法提取文本: {pdf_path.name}")
+            print(f"[{i}/{total}] X 无法提取文本: {pdf_path.name}")
             failed += 1
             continue
 
@@ -145,7 +145,7 @@ def run():
         # 分块
         chunks = chunk_sections(parsed.sections)
         if not chunks:
-            print(f"[{i}/{total}] ✗ 无分块: {pdf_path.name}")
+            print(f"[{i}/{total}] X 无分块: {pdf_path.name}")
             failed += 1
             continue
 
@@ -175,7 +175,7 @@ def run():
         )
 
         elapsed = time.time() - t0
-        print(f"[{i}/{total}] ✓ {pdf_path.name} | {parsed.page_count}页 | {len(chunks)}块 | {elapsed:.1f}s")
+        print(f"[{i}/{total}] OK {pdf_path.name} | {parsed.page_count}页 | {len(chunks)}块 | {elapsed:.1f}s")
         success += 1
 
         # 每 10 篇显示进度
