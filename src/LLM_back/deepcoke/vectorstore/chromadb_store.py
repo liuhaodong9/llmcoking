@@ -51,14 +51,22 @@ def get_chroma_client() -> chromadb.ClientAPI:
 def get_collection(name: str | None = None):
     """Get or create the coking papers collection with GPU embeddings."""
     client = get_chroma_client()
+    col_name = name or config.CHROMADB_COLLECTION
+
+    # 先尝试获取已有 collection（不传 embedding_function 避免冲突）
+    existing_names = [c.name for c in client.list_collections()]
+    if col_name in existing_names:
+        return client.get_collection(name=col_name)
+
+    # 不存在则新建，带 embedding function
     ef = _get_embedding_function()
     kwargs = {
-        "name": name or config.CHROMADB_COLLECTION,
+        "name": col_name,
         "metadata": {"hnsw:space": "cosine"},
     }
     if ef is not None:
         kwargs["embedding_function"] = ef
-    return client.get_or_create_collection(**kwargs)
+    return client.create_collection(**kwargs)
 
 
 def upsert_chunks(

@@ -102,11 +102,24 @@ export default {
   },
   methods: {
     renderMarkdown (text) {
-      let preprocessed = text
+      // 先保护 <details>/<summary> 标签，避免被转义
+      const detailsPlaceholders = []
+      let preprocessed = text.replace(/<\/?(?:details|summary)[^>]*>/gi, (match) => {
+        const idx = detailsPlaceholders.length
+        detailsPlaceholders.push(match)
+        return `__DETAILS_PH_${idx}__`
+      })
+
+      preprocessed = preprocessed
         .replace(/\s*<br\s*\/?>\s*/gi, '\n\n')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
+
+      // 恢复 <details>/<summary> 标签
+      preprocessed = preprocessed.replace(/__DETAILS_PH_(\d+)__/g, (_, idx) => {
+        return detailsPlaceholders[parseInt(idx)]
+      })
 
       preprocessed = preprocessed
         .replace(/\$\$(.*?)\$\$/gs, (_, equation) => {
@@ -221,12 +234,24 @@ export default {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let botReply = ''
+        let progressBlock = '' // 当前进度块（每次整体替换）
 
         while (true) {
           const { value, done } = await reader.read()
           if (done) break
-          botReply += decoder.decode(value, { stream: true })
-          botMessage.text = botReply
+          const chunk = decoder.decode(value, { stream: true })
+
+          // 检测是否为进度块（包含 <details open> 推理链路标记）
+          if (chunk.includes('<details open>') && chunk.includes('推理链路')) {
+            // 这是一个完整的进度更新，替换上一次的进度块
+            progressBlock = chunk
+            botMessage.text = progressBlock
+          } else {
+            // 正常内容：追加到最终回复
+            // 当第一段正式内容到达时，保留进度块并开始追加正文
+            botReply += chunk
+            botMessage.text = progressBlock + botReply
+          }
           this.$nextTick(() => this.scrollToBottom())
         }
 
@@ -422,6 +447,34 @@ export default {
 ::v-deep .message-bubble th {
   background: #2a2a2a;
   color: #fff;
+}
+
+/* ===== 推理过程折叠块 ===== */
+::v-deep .message-bubble details {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0 12px;
+}
+::v-deep .message-bubble details summary {
+  cursor: pointer;
+  color: #7eb8f7;
+  font-size: 14px;
+  user-select: none;
+}
+::v-deep .message-bubble details summary:hover {
+  color: #58a6ff;
+}
+::v-deep .message-bubble details[open] summary {
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
+}
+::v-deep .message-bubble details p,
+::v-deep .message-bubble details li {
+  font-size: 13px;
+  color: #b0b0b0;
 }
 
 /* ===== 加载动画 ===== */

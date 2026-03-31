@@ -31,3 +31,4 @@ pnpm-debug.log*
 # Data files
 src/LLM_back/deepcoke/data/chromadb/
 src/LLM_back/deepcoke/data/bge-base-en-v1.5/
+src/LLM_back/deepcoke/data/papers.db
