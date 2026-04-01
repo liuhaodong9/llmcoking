@@ -3,6 +3,23 @@
     <!-- 聊天内容区域 -->
     <div class="chat-scroll" ref="chatScroll">
       <div class="chat-content">
+        <!-- 欢迎区域（仅新会话且无消息时显示） -->
+        <div v-if="messages.length <= 1 && sessionId === 'new'" class="welcome-area">
+          <div class="welcome-logo">
+            <img src="../assets/imgs/DeepCoke_logo.png" alt="DC" />
+          </div>
+          <h2 class="welcome-title">有什么可以帮您？</h2>
+          <div class="quick-actions">
+            <div class="quick-item" v-for="(q, i) in quickQuestions" :key="i" @click="sendQuickQuestion(q.text)">
+              <span class="quick-icon">{{ q.icon }}</span>
+              <div class="quick-text">
+                <span class="quick-main">{{ q.main }}</span>
+                <span class="quick-sub">{{ q.sub }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           v-for="(message, index) in messages"
           :key="index"
@@ -39,8 +56,8 @@
 
         <!-- 附件按钮 -->
         <button class="input-icon-btn" @click="openFilePicker" title="添加文件">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </button>
 
@@ -68,8 +85,9 @@
 
         <!-- 发送按钮 -->
         <button class="send-btn" :class="{ 'has-text': newMessage.trim() }" @click="sendMessage">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94l18.06-8.5a.75.75 0 0 0 0-1.38L3.478 2.405z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
@@ -97,12 +115,17 @@ export default {
       attachments: [],
       isDictating: false,
       voiceMode: false,
-      recognition: null
+      recognition: null,
+      quickQuestions: [
+        { icon: '⚗', main: '优化配煤方案', sub: '基于煤质指标自动推算', text: '帮我优化一个配煤方案' },
+        { icon: '📊', main: '预测焦炭质量', sub: '灰分、硫分、强度预测', text: '预测这批煤的焦炭质量' },
+        { icon: '📚', main: '查阅焦化文献', sub: '6000+ 篇专业知识库', text: '关于捣固焦工艺的文献有哪些？' },
+        { icon: '🔧', main: '工艺问题诊断', sub: '温度场异常分析', text: '焦炉温度场异常，可能的原因有哪些？' }
+      ]
     }
   },
   methods: {
     renderMarkdown (text) {
-      // 先保护 <details>/<summary> 标签，避免被转义
       const detailsPlaceholders = []
       let preprocessed = text.replace(/<\/?(?:details|summary)[^>]*>/gi, (match) => {
         const idx = detailsPlaceholders.length
@@ -116,7 +139,6 @@ export default {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
 
-      // 恢复 <details>/<summary> 标签
       preprocessed = preprocessed.replace(/__DETAILS_PH_(\d+)__/g, (_, idx) => {
         return detailsPlaceholders[parseInt(idx)]
       })
@@ -202,6 +224,10 @@ export default {
       window.speechSynthesis.cancel()
       window.speechSynthesis.speak(u)
     },
+    sendQuickQuestion (text) {
+      this.newMessage = text
+      this.sendMessage()
+    },
     async sendMessage () {
       if (!this.newMessage.trim()) return
       const userText = this.newMessage
@@ -234,21 +260,17 @@ export default {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let botReply = ''
-        let progressBlock = '' // 当前进度块（每次整体替换）
+        let progressBlock = ''
 
         while (true) {
           const { value, done } = await reader.read()
           if (done) break
           const chunk = decoder.decode(value, { stream: true })
 
-          // 检测是否为进度块（包含 <details open> 推理链路标记）
           if (chunk.includes('<details open>') && chunk.includes('推理链路')) {
-            // 这是一个完整的进度更新，替换上一次的进度块
             progressBlock = chunk
             botMessage.text = progressBlock
           } else {
-            // 正常内容：追加到最终回复
-            // 当第一段正式内容到达时，保留进度块并开始追加正文
             botReply += chunk
             botMessage.text = progressBlock + botReply
           }
@@ -323,7 +345,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #212121;
+  background: #0f0f0f;
 }
 
 /* ===== 消息滚动区 ===== */
@@ -338,14 +360,99 @@ export default {
 }
 
 .chat-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
 }
 
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .chat-content {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
   padding: 16px 24px 24px;
+}
+
+/* ===== 欢迎区域 ===== */
+.welcome-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 0 40px;
+}
+
+.welcome-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ff8a00, #149efa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.welcome-logo img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(10);
+}
+
+.welcome-title {
+  font-size: 22px;
+  color: #e0e0e0;
+  font-weight: 500;
+  margin: 0 0 28px;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.quick-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.quick-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.quick-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quick-main {
+  font-size: 13px;
+  color: #d0d0d0;
+  font-weight: 500;
+}
+
+.quick-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* ===== 消息行 ===== */
@@ -362,8 +469,8 @@ export default {
 
 /* ===== 头像 ===== */
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
@@ -377,8 +484,8 @@ export default {
 }
 
 .bot-avatar img {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   filter: brightness(10);
 }
@@ -393,36 +500,39 @@ export default {
 }
 
 .message-row.bot .message-bubble {
-  color: #e0e0e0;
+  color: #d4d4d4;
   padding: 0;
 }
 
 .message-row.user .message-bubble {
-  background: #2f2f2f;
+  background: #1a3a5c;
   color: #e0e0e0;
   padding: 12px 18px;
   border-radius: 18px 18px 4px 18px;
+  border: 1px solid rgba(20, 158, 250, 0.15);
 }
 
 /* ===== Markdown 内容样式 ===== */
 .message-bubble span { word-break: break-word; }
 
-::v-deep .message-bubble h1 { font-size: 20px; font-weight: 600; color: #fff; margin: 16px 0 8px; }
-::v-deep .message-bubble h2 { font-size: 18px; font-weight: 600; color: #fff; margin: 14px 0 6px; }
-::v-deep .message-bubble h3 { font-size: 16px; font-weight: 600; color: #fff; margin: 12px 0 4px; }
+::v-deep .message-bubble h1 { font-size: 20px; font-weight: 600; color: #f0f0f0; margin: 16px 0 8px; }
+::v-deep .message-bubble h2 { font-size: 18px; font-weight: 600; color: #f0f0f0; margin: 14px 0 6px; }
+::v-deep .message-bubble h3 { font-size: 16px; font-weight: 600; color: #f0f0f0; margin: 12px 0 4px; }
 ::v-deep .message-bubble p { margin: 8px 0; }
 ::v-deep .message-bubble ul,
 ::v-deep .message-bubble ol { padding-left: 20px; margin: 8px 0; }
 ::v-deep .message-bubble code {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
+  font-family: 'Fira Code', monospace;
   color: #e8ab6a;
 }
 ::v-deep .message-bubble pre {
-  background: #1a1a1a;
-  border-radius: 8px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
   padding: 14px;
   margin: 10px 0;
   overflow-x: auto;
@@ -430,7 +540,7 @@ export default {
 ::v-deep .message-bubble pre code {
   background: transparent;
   padding: 0;
-  color: #e0e0e0;
+  color: #d4d4d4;
 }
 ::v-deep .message-bubble a { color: #58a6ff; }
 ::v-deep .message-bubble table {
@@ -440,20 +550,20 @@ export default {
 }
 ::v-deep .message-bubble th,
 ::v-deep .message-bubble td {
-  border: 1px solid #3a3a3a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 8px 12px;
   text-align: left;
 }
 ::v-deep .message-bubble th {
-  background: #2a2a2a;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e0e0e0;
 }
 
 /* ===== 推理过程折叠块 ===== */
 ::v-deep .message-bubble details {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  background: rgba(20, 158, 250, 0.04);
+  border: 1px solid rgba(20, 158, 250, 0.12);
+  border-radius: 10px;
   padding: 10px 14px;
   margin: 8px 0 12px;
 }
@@ -468,27 +578,27 @@ export default {
 }
 ::v-deep .message-bubble details[open] summary {
   margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(20, 158, 250, 0.1);
   padding-bottom: 6px;
 }
 ::v-deep .message-bubble details p,
 ::v-deep .message-bubble details li {
   font-size: 13px;
-  color: #b0b0b0;
+  color: #9a9a9a;
 }
 
 /* ===== 加载动画 ===== */
 .loading-dots {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   padding: 8px 0;
 }
 
 .loading-dots span {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #666;
+  background: #444;
   animation: dots 1.4s infinite ease-in-out;
 }
 
@@ -505,7 +615,7 @@ export default {
 .input-area {
   flex-shrink: 0;
   padding: 0 24px 16px;
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -515,15 +625,15 @@ export default {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  background: #2f2f2f;
-  border: 1px solid #3a3a3a;
-  border-radius: 24px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
   padding: 8px 8px 8px 4px;
   transition: border-color 0.2s;
 }
 
 .input-wrapper:focus-within {
-  border-color: #555;
+  border-color: rgba(20, 158, 250, 0.3);
 }
 
 /* ===== 输入框 ===== */
@@ -546,7 +656,7 @@ export default {
 }
 
 ::v-deep .el-textarea__inner::placeholder {
-  color: #666;
+  color: #555;
 }
 
 ::v-deep .el-textarea__inner:focus {
@@ -561,7 +671,7 @@ export default {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #888;
+  color: #666;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,13 +681,13 @@ export default {
 }
 
 .input-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ccc;
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
 }
 
 .input-icon-btn.active {
   color: #149efa;
-  background: rgba(20, 158, 250, 0.15);
+  background: rgba(20, 158, 250, 0.12);
 }
 
 /* ===== 发送按钮 ===== */
@@ -586,8 +696,8 @@ export default {
   height: 34px;
   border: none;
   border-radius: 50%;
-  background: #555;
-  color: #999;
+  background: #2a2a2a;
+  color: #555;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,20 +707,21 @@ export default {
 }
 
 .send-btn.has-text {
-  background: #fff;
-  color: #212121;
+  background: linear-gradient(135deg, #ff8a00, #149efa);
+  color: #fff;
   cursor: pointer;
 }
 
 .send-btn.has-text:hover {
-  background: #e0e0e0;
+  opacity: 0.9;
+  transform: scale(1.05);
 }
 
 /* ===== 底部提示 ===== */
 .input-footer {
   text-align: center;
   font-size: 12px;
-  color: #555;
+  color: #444;
   padding-top: 8px;
 }
 </style>

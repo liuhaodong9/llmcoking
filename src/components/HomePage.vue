@@ -7,19 +7,29 @@
                 <!-- 顶部：logo + 折叠 + 新对话 -->
                 <div class="sidebar-top">
                     <div class="sidebar-header">
-                        <div class="logo">DeepCoke</div>
+                        <div class="logo">
+                            <span class="logo-dot"></span>
+                            DeepCoke
+                        </div>
                         <button class="icon-btn" @click="toggleCollapse" title="收起侧边栏">
-                            <i class="el-icon-s-fold"></i>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="11 17 6 12 11 7"/>
+                                <polyline points="18 17 13 12 18 7"/>
+                            </svg>
                         </button>
                     </div>
                     <button class="new-chat-btn" @click="startNewChat">
-                        <i class="el-icon-plus"></i>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
                         <span>新对话</span>
                     </button>
                 </div>
 
                 <!-- 历史对话记录 -->
                 <div class="chat-history">
+                    <div class="history-label">历史对话</div>
                     <div
                       v-for="session in chatSessions"
                       :key="session.session_id"
@@ -27,15 +37,35 @@
                       :class="{ active: sessionId === session.session_id }"
                       @click="selectSession(session.session_id)"
                     >
+                        <svg class="chat-item-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
                         <span class="chat-title">{{ session.title }}</span>
                         <el-dropdown trigger="click" @command="handleMenuCommand($event, session.session_id)">
-                            <span class="chat-menu-btn" @click.stop><i class="el-icon-more"></i></span>
+                            <span class="chat-menu-btn" @click.stop>
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                    <circle cx="12" cy="5" r="1.5"/>
+                                    <circle cx="12" cy="12" r="1.5"/>
+                                    <circle cx="12" cy="19" r="1.5"/>
+                                </svg>
+                            </span>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item command="rename">重命名</el-dropdown-item>
                                 <el-dropdown-item command="delete">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
                     </div>
+                </div>
+
+                <!-- 侧边栏底部 -->
+                <div class="sidebar-bottom">
+                    <button class="sidebar-bottom-btn" @click="goLanding">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span>返回首页</span>
+                    </button>
                 </div>
             </div>
         </el-aside>
@@ -45,11 +75,14 @@
             <!-- 顶栏 -->
             <div class="top-bar">
                 <button v-if="isCollapese" class="icon-btn" @click="toggleCollapse" title="展开侧边栏">
-                    <i class="el-icon-s-unfold"></i>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="13 17 18 12 13 7"/>
+                        <polyline points="6 17 11 12 6 7"/>
+                    </svg>
                 </button>
                 <div class="top-bar-right">
                     <button class="voice-top-btn" @click="goVoiceChat">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
                             <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
                         </svg>
                         <span>语音对话</span>
@@ -76,6 +109,9 @@ export default {
   methods: {
     toggleCollapse () {
       this.isCollapese = !this.isCollapese
+    },
+    goLanding () {
+      this.$router.push('/landing')
     },
     async startNewChat () {
       try {
@@ -182,15 +218,16 @@ export default {
   height: 100vh;
 }
 
-/* ===== 侧边栏（深色科技风） ===== */
+/* ===== 侧边栏 ===== */
 .el-aside {
-  background: #171717;
+  background: #0a0a0a;
   width: 260px;
   position: relative;
   height: 100vh;
   transition: width 0.2s ease;
   overflow: hidden;
   flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-inner {
@@ -201,7 +238,7 @@ export default {
 }
 
 .sidebar-top {
-  padding: 12px;
+  padding: 14px 12px;
   flex-shrink: 0;
 }
 
@@ -209,49 +246,57 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 4px 0;
+  margin-bottom: 14px;
+  padding: 2px 0;
 }
 
 .logo {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 22px;
+  font-family: 'Orbitron', 'Fira Code', monospace;
+  font-size: 18px;
   font-weight: 700;
-  background: linear-gradient(90deg, #ff8a00, #149efa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a00, #149efa);
+  box-shadow: 0 0 8px rgba(20, 158, 250, 0.4);
 }
 
 /* ===== 通用图标按钮 ===== */
 .icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #999;
+  color: #666;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s;
-  font-size: 18px;
   flex-shrink: 0;
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
 }
 
 /* ===== 新对话按钮 ===== */
 .new-chat-btn {
   width: 100%;
-  height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  background: transparent;
-  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.03);
+  color: #c0c0c0;
   font-size: 14px;
   display: flex;
   align-items: center;
@@ -262,20 +307,25 @@ export default {
 }
 
 .new-chat-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.new-chat-btn i {
-  font-size: 14px;
-  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e0e0e0;
 }
 
 /* ===== 历史记录 ===== */
 .chat-history {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 8px;
+  padding: 4px 8px;
+}
+
+.history-label {
+  font-size: 11px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 12px 6px;
+  font-family: 'Fira Code', monospace;
 }
 
 .chat-history::-webkit-scrollbar {
@@ -283,15 +333,15 @@ export default {
 }
 
 .chat-history::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 4px;
 }
 
 .chat-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 9px 12px;
   margin: 1px 0;
   border-radius: 8px;
   cursor: pointer;
@@ -299,17 +349,27 @@ export default {
 }
 
 .chat-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .chat-item.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 158, 250, 0.08);
+  border: 1px solid rgba(20, 158, 250, 0.12);
+}
+
+.chat-item-icon {
+  color: #555;
+  flex-shrink: 0;
+}
+
+.chat-item.active .chat-item-icon {
+  color: #149efa;
 }
 
 .chat-title {
   flex: 1;
   font-size: 13px;
-  color: #ccc;
+  color: #999;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -317,13 +377,12 @@ export default {
 }
 
 .chat-item.active .chat-title {
-  color: #fff;
+  color: #d0d0d0;
 }
 
 .chat-menu-btn {
   opacity: 0;
-  color: #888;
-  font-size: 14px;
+  color: #666;
   padding: 2px 4px;
   border-radius: 4px;
   transition: all 0.12s;
@@ -336,13 +395,41 @@ export default {
 }
 
 .chat-menu-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== 侧边栏底部 ===== */
+.sidebar-bottom {
+  flex-shrink: 0;
+  padding: 8px 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-bottom-btn {
+  width: 100%;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sidebar-bottom-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #aaa;
 }
 
 /* ===== 右侧主体 ===== */
 .el-main {
-  background: #212121;
+  background: #0f0f0f;
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -372,13 +459,13 @@ export default {
 }
 
 .voice-top-btn {
-  height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  background: transparent;
-  color: #ccc;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #888;
   font-size: 13px;
-  padding: 0 16px;
+  padding: 0 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -387,13 +474,13 @@ export default {
 }
 
 .voice-top-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .voice-top-btn svg {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 </style>
